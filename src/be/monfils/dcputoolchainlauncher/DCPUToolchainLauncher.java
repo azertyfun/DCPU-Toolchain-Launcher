@@ -6,12 +6,10 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.IOException;
-import java.io.OutputStreamWriter;
+import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
 import java.nio.file.Paths;
 import java.util.LinkedList;
 
@@ -31,6 +29,7 @@ public class DCPUToolchainLauncher extends JFrame {
 	private JList<String> run_hardware_list = new JList<>();
 	private JButton run_addLEM = new JButton("Add LEM1802"), run_addClock = new JButton("Add generic clock"), run_addKeyboard = new JButton("Add generic keyboard"), run_addEDC = new JButton("Add EDC"), run_addM35FD = new JButton("Add M35FD"), run_addM525HD = new JButton("Add M525HD"), run_remove = new JButton("Remove selected item(s)");
 	private JPanel run_addHardware_panel = new JPanel();
+	private JCheckBox addBootLoader = new JCheckBox("Automatically add bootloader");
 
 	private DefaultListModel<String> run_hardware_listModel = new DefaultListModel<>();
 
@@ -99,6 +98,8 @@ public class DCPUToolchainLauncher extends JFrame {
 			setup_assemble_listModel = false;
 		}
 
+		addBootLoader.setSelected(options.addBootLoader);
+
 		if(options.action < 2 && options.action >= 0)
 			action.setSelectedIndex(options.action);
 		else
@@ -131,6 +132,7 @@ public class DCPUToolchainLauncher extends JFrame {
 		run_addHardware_panel.add(run_addM35FD);
 		run_addHardware_panel.add(run_addM525HD);
 		run_addHardware_panel.add(run_remove);
+		run_addHardware_panel.add(addBootLoader);
 		run_panel.add(run_addHardware_panel, BorderLayout.EAST);
 
 		run_panel.add(run_browse, BorderLayout.NORTH);
@@ -286,6 +288,29 @@ public class DCPUToolchainLauncher extends JFrame {
 							commandLine.add("--" + hw);
 						}
 					}
+
+					if(addBootLoader.isSelected()) {
+						try {
+							File tmpFile = File.createTempFile("DCPUToolchainLauncher", Long.toString(System.currentTimeMillis()));
+
+							byte[] header = Files.readAllBytes(Paths.get("bin/res/bold_header.bin"));
+							int length = (Files.readAllBytes(Paths.get(run_file.getAbsolutePath()))).length;
+							header[0x1FE * 2 + 1] = (byte) ((length / 1024) & 0xFF);
+
+							FileOutputStream fos = new FileOutputStream(tmpFile);
+							fos.write(header);
+							fos.close();
+
+							commandLine.add("--bootloader=" + tmpFile.getAbsolutePath());
+						} catch (NoSuchFileException e) {
+							System.err.println("Error: File not found: " + e.getFile() + ".\n");
+							JOptionPane.showMessageDialog(null, "Could not find file " + e.getFile(), "Error", JOptionPane.ERROR_MESSAGE);
+						} catch (IOException e) {
+							JOptionPane.showMessageDialog(null, "IOException: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+							e.printStackTrace();
+						}
+					}
+
 					break;
 				case 1: //ASSEMBLE
 					if(assemble_file == null || !assemble_file.exists())
@@ -343,6 +368,7 @@ public class DCPUToolchainLauncher extends JFrame {
 
 				options.run_listModel = run_hardware_listModel;
 				options.assembly_listModel = assemble_hardware_listModel;
+				options.addBootLoader = addBootLoader.isSelected();
 
 				try {
 					File file_options = new File("options.json");
@@ -402,6 +428,11 @@ public class DCPUToolchainLauncher extends JFrame {
 		commandLine_array[2] = "DCPU-Toolchain.jar";
 		for(int i = 0; i < commandLine.size(); ++i)
 			commandLine_array[i + 3] = commandLine.get(i);
+
+		System.out.print("Command line: ");
+		for(String s : commandLine_array)
+			System.out.print(s + " ");
+		System.out.println();
 
 		ProcessBuilder pb = new ProcessBuilder(commandLine_array);
 		pb.directory(new File("bin"));
