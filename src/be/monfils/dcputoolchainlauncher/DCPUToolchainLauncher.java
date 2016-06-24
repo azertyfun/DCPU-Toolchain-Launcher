@@ -27,7 +27,7 @@ public class DCPUToolchainLauncher extends JFrame {
 	 */
 	private JButton run_browse = new JButton("Browse for binary...");
 	private JList<String> run_hardware_list = new JList<>();
-	private JButton run_addLEM = new JButton("Add LEM1802"), run_addClock = new JButton("Add generic clock"), run_addKeyboard = new JButton("Add generic keyboard"), run_addEDC = new JButton("Add EDC"), run_addM35FD = new JButton("Add M35FD"), run_addM525HD = new JButton("Add M525HD"), run_remove = new JButton("Remove selected item(s)");
+	private JButton run_addLEM = new JButton("Add LEM1802"), run_addClock = new JButton("Add generic clock"), run_addKeyboard = new JButton("Add generic keyboard"), run_addEDC = new JButton("Add EDC"), run_addM35FD = new JButton("Add M35FD"), run_addM525HD = new JButton("Add M525HD"), run_addSpeaker = new JButton("Add Speaker"),run_remove = new JButton("Remove selected item(s)");
 	private JPanel run_addHardware_panel = new JPanel();
 	private JCheckBox addBootLoader = new JCheckBox("Automatically add bootloader");
 
@@ -131,6 +131,7 @@ public class DCPUToolchainLauncher extends JFrame {
 		run_addHardware_panel.add(run_addLEM);
 		run_addHardware_panel.add(run_addM35FD);
 		run_addHardware_panel.add(run_addM525HD);
+		run_addHardware_panel.add(run_addSpeaker);
 		run_addHardware_panel.add(run_remove);
 		run_addHardware_panel.add(addBootLoader);
 		run_panel.add(run_addHardware_panel, BorderLayout.EAST);
@@ -196,6 +197,7 @@ public class DCPUToolchainLauncher extends JFrame {
 		run_addKeyboard.addActionListener(actionEvent -> run_hardware_listModel.addElement("Generic keyboard"));
 		run_addEDC.addActionListener(actionEvent -> run_hardware_listModel.addElement("EDC"));
 		run_addLEM.addActionListener(actionEvent -> run_hardware_listModel.addElement("LEM1802"));
+		run_addSpeaker.addActionListener(actionEvent -> run_hardware_listModel.addElement("Speaker"));
 		run_addM35FD.addActionListener(actionEvent -> {
 			JFileChooser jfc = new JFileChooser();
 			int returnVal = jfc.showOpenDialog(DCPUToolchainLauncher.this);
@@ -234,6 +236,7 @@ public class DCPUToolchainLauncher extends JFrame {
 		assemble_addKeyboard.addActionListener(actionEvent -> assemble_hardware_listModel.addElement("Generic keyboard"));
 		assemble_addEDC.addActionListener(actionEvent -> assemble_hardware_listModel.addElement("EDC"));
 		assemble_addLEM.addActionListener(actionEvent -> assemble_hardware_listModel.addElement("LEM1802"));
+		assemble_addLEM.addActionListener(actionEvent -> assemble_hardware_listModel.addElement("Speaker"));
 		assemble_addM35FD.addActionListener(actionEvent -> {
 			JFileChooser jfc = new JFileChooser();
 			int returnVal = jfc.showOpenDialog(DCPUToolchainLauncher.this);
@@ -284,6 +287,8 @@ public class DCPUToolchainLauncher extends JFrame {
 							commandLine.add("--lem1802");
 						} else if(hw.equals("EDC")) {
 							commandLine.add("--edc");
+						} else if(hw.equals("Speaker")) {
+							commandLine.add("--speaker");
 						} else if(hw.substring(0, 5).equals("M35FD") || hw.substring(0, 5).equals("M525HD")) {
 							commandLine.add("--" + hw);
 						}
@@ -295,7 +300,7 @@ public class DCPUToolchainLauncher extends JFrame {
 
 							byte[] header = Files.readAllBytes(Paths.get("bin/res/bold_header.bin"));
 							int length = (Files.readAllBytes(Paths.get(run_file.getAbsolutePath()))).length;
-							header[0x1FE * 2 + 1] = (byte) ((length / 1024) & 0xFF);
+							header[0x1FE * 2] = (byte) ((length / 1024 + 1) & 0xFF);
 
 							FileOutputStream fos = new FileOutputStream(tmpFile);
 							fos.write(header);
@@ -330,6 +335,8 @@ public class DCPUToolchainLauncher extends JFrame {
 							commandLine.add("--lem1802");
 						} else if(hw.equals("EDC")) {
 							commandLine.add("--edc");
+						} else if(hw.equals("Speaker")) {
+							commandLine.add("--speaker");
 						} else if(hw.substring(0, 5).equals("M35FD") || hw.substring(0, 5).equals("M525HD")) {
 							commandLine.add("--" + hw);
 						}
