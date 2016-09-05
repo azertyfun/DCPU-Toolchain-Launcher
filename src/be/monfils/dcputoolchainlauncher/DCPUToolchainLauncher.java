@@ -1,15 +1,21 @@
 package be.monfils.dcputoolchainlauncher;
 
 import com.google.gson.Gson;
+import sun.misc.IOUtils;
+import sun.nio.ch.IOUtil;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
 import java.io.*;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.LinkedList;
 
@@ -298,7 +304,8 @@ public class DCPUToolchainLauncher extends JFrame {
 						try {
 							File tmpFile = File.createTempFile("DCPUToolchainLauncher", Long.toString(System.currentTimeMillis()));
 
-							byte[] header = Files.readAllBytes(Paths.get("bin/res/bold_header.bin"));
+							System.out.println(getClass().getResourceAsStream("/bold_header.bin"));
+							byte[] header = IOUtils.readFully(getClass().getResourceAsStream("/bold_header.bin"), getClass().getResourceAsStream("/bold_header.bin").available(), true);
 							int length = (Files.readAllBytes(Paths.get(run_file.getAbsolutePath()))).length;
 							header[0x1FE * 2] = (byte) ((length / 1024 + 1) & 0xFF);
 
