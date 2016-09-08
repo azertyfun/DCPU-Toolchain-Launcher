@@ -304,7 +304,6 @@ public class DCPUToolchainLauncher extends JFrame {
 						try {
 							File tmpFile = File.createTempFile("DCPUToolchainLauncher", Long.toString(System.currentTimeMillis()));
 
-							System.out.println(getClass().getResourceAsStream("/bold_header.bin"));
 							byte[] header = IOUtils.readFully(getClass().getResourceAsStream("/bold_header.bin"), getClass().getResourceAsStream("/bold_header.bin").available(), true);
 							int length = (Files.readAllBytes(Paths.get(run_file.getAbsolutePath()))).length;
 							header[0x1FE * 2] = (byte) ((length / 1024 + 1) & 0xFF);
